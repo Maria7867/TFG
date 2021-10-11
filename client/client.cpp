@@ -113,22 +113,27 @@ int main(int argc, char *argv[]){
   int size = strlen(data);
   filepath.assign(data, size);
 
-
-  printf("lkjfj: %s\n", getFileExt(filepath));
-
-  FILE *fd = fopen(argv[3], "rb");
-  if (fd==NULL){
-    printf("ERROR\n");
+  if(filepath.substr(filepath.find_last_of(".") + 1) == "txt") {
+    std::cout << "Yes..." << std::endl;
+    FILE *fd = fopen(argv[3], "rb");
+    if (fd==NULL){
+      printf("ERROR\n");
+    }
+    size_t rret, wret;
+    int bytes_read;
+    while (!feof(fd)) {
+        if ((bytes_read = fread(&buffer, 1, BUFFER_SIZE, fd)) > 0)
+            send(sockfd, buffer, bytes_read, 0);
+        else
+            break;
+    }
+    fclose(fd);
   }
-  size_t rret, wret;
-  int bytes_read;
-  while (!feof(fd)) {
-      if ((bytes_read = fread(&buffer, 1, BUFFER_SIZE, fd)) > 0)
-          send(sockfd, buffer, bytes_read, 0);
-      else
-          break;
+  if(filepath.substr(filepath.find_last_of(".") + 1) == "jpeg") {
+    send_image(sockfd, argv[3]);
   }
-  fclose(fd);
+
+
 
   //escribe lo leido de la terminal en el socket
   /*n = write(sockfd, buffer, strlen(buffer));

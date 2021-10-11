@@ -147,6 +147,7 @@ FILE* fd = fopen("recibido.txt", "wb");
 int datasize = recv(newsockfd, buffer, sizeof(buffer), 0);
 fwrite(&buffer, 1, datasize, fd);
 fclose(fd);
+receive_image(newsockfd);
 
 bzero(buffer,256); //deja el buffer a 0, es decir, limpia el buffer
 
