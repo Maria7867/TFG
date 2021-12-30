@@ -37,8 +37,9 @@ def main():
     drive_api = build('drive', 'v3', credentials=creds)
 	#Now build our api object, thing
 	#drive_api = build('drive', 'v3', credentials=creds)
+    print("file name: ")
+    file_name = input()
 
-    file_name = "avantasia_cover"
     print ("Uploading file " + file_name + "...")
 
 	#We have to make a request hash to tell the google API what we're giving it
@@ -46,7 +47,9 @@ def main():
 
 	#Now create the media file upload object and tell it what file to upload,
 	#in this case 'test.html'
-    media = MediaFileUpload('/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg', mimetype='image/jpeg')
+    print("file path: ")
+    file_path = input()
+    media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
 	#Now we're doing the actual post, creating a new file of the uploaded type
     fiahl = drive_api.files().create(body=body, media_body=media).execute()
