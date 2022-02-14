@@ -9,6 +9,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
+from zipfile import ZipFile
+import os #para conseguir el final del file_path
+
 # If modifying these scopes, delete the file token.json.
 #SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -37,6 +40,9 @@ def main():
     drive_api = build('drive', 'v3', credentials=creds)
 	#Now build our api object, thing
 	#drive_api = build('drive', 'v3', credentials=creds)
+    print("choose level: ")
+    level = input()
+
     print("file name: ")
     file_name = input()
 
@@ -49,13 +55,31 @@ def main():
 	#in this case 'test.html'
     print("file path: ")
     file_path = input()
-    media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
-	#Now we're doing the actual post, creating a new file of the uploaded type
-    fiahl = drive_api.files().create(body=body, media_body=media).execute()
+    if level=='0':
+        media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
-	#Because verbosity is nice
-    print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
+    	#Now we're doing the actual post, creating a new file of the uploaded type
+        fiahl = drive_api.files().create(body=body, media_body=media).execute()
+
+    	#Because verbosity is nice
+        print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
+
+    if level=='1':
+        print("zip name: ")
+        zip_name = input()
+        zip_name = zip_name + '.zip'
+        myzip=ZipFile(zip_name, 'w')
+        myzip.write(os.path.basename(file_path)) #no se si os.path.basename funciona para windows
+        myzip.close()
+
+        media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+
+    	#Now we're doing the actual post, creating a new file of the uploaded type
+        fiahl = drive_api.files().create(body=body, media_body=media).execute()
+
+    	#Because verbosity is nice
+        print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
 
 if __name__ == '__main__':
     main()

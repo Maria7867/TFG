@@ -1,6 +1,8 @@
 #dropbox
 import dropbox
 from dropbox import DropboxOAuth2FlowNoRedirect
+from zipfile import ZipFile
+import os #para conseguir el final del file_path
 
 '''
 Permisos
@@ -44,11 +46,23 @@ with dropbox.Dropbox(oauth2_access_token=oauth_result.access_token,
 '''
 Upload file
 '''
+print("choose level: ")
+level = input()
 print ("File path from your pc: ") #/home/maria/Documentos/TFG/Dropbox/avantasia_cover.jpeg
 file_from = input()
-print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg
+print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
 file_to = input ()
 
-dbx = dropbox.Dropbox('sl.A-j7WYWVEJPjqbgluMIvaxFIRgIp-F_ENaMZMTaNS_SnvbKMvw8AmJqSPYeI2r3l6gWyClyqsp-mW7xqa4oo0GdPC0OANcOs3maKcLvIqNmwcfB7OEmQg2vgEJYx_tsEFu8p5Oo') #Este es el token, si no funciona es porque se habrá caducado.
+dbx = dropbox.Dropbox('sl.BB9rivmsSB7qtahlvWngtCxjQKvxLTyJ1cs3jBuB71jD_B9Jm1EnBgoAeJflV-UqkdphCQKRXHBXEPNNS0Xilcw-kLxE6Q4FBc30d7VogVcoXJNZhXJAf19OwlX2t3QQmsk7rPA') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
 #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
-dbx.files_upload(open(file_from, 'rb').read(), file_to)
+
+if level=='0':
+    dbx.files_upload(open(file_from, 'rb').read(), file_to)
+if level=='1':
+    print("zip name: ")
+    zip_name = input()
+    zip_name = zip_name + '.zip'
+    myzip=ZipFile(zip_name, 'w')
+    myzip.write(os.path.basename(file_from)) #no se si os.path.basename funciona para windows
+    myzip.close()
+    dbx.files_upload(open(zip_name, 'rb').read(), file_to)
