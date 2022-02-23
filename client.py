@@ -48,15 +48,15 @@ def main():
 
     print ("Uploading file " + file_name + "...")
 
-	#We have to make a request hash to tell the google API what we're giving it
-    body = {'name': file_name, 'mimeType': 'application/vnd.google-apps.photo'}
-
-	#Now create the media file upload object and tell it what file to upload,
+	##Now create the media file upload object and tell it what file to upload,
 	#in this case 'test.html'
     print("file path: ")
     file_path = input()
 
     if level=='0':
+        #We have to make a request hash to tell the google API what we're giving it
+        body = {'name': file_name, 'mimeType': 'application/vnd.google-apps.photo'}
+
         media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
     	#Now we're doing the actual post, creating a new file of the uploaded type
@@ -66,17 +66,23 @@ def main():
         print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
 
     if level=='1':
+        #We have to make a request hash to tell the google API what we're giving it
+        body = {'name': file_name, 'mimeType': 'application/zip'} #application/vnd.google-apps.folder
+
         print("zip name: ")
         zip_name = input()
         zip_name = zip_name + '.zip'
         myzip=ZipFile(zip_name, 'w')
         myzip.write(os.path.basename(file_path)) #no se si os.path.basename funciona para windows
         myzip.close()
+        print ("1...........")
 
-        media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+        media = MediaFileUpload(zip_name, mimetype='application/zip')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+        print ("2...........")
 
     	#Now we're doing the actual post, creating a new file of the uploaded type
         fiahl = drive_api.files().create(body=body, media_body=media).execute()
+        print ("3...........")
 
     	#Because verbosity is nice
         print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
