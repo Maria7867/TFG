@@ -1,5 +1,5 @@
 from __future__ import print_function
-from oauth2client.service_account import ServiceAccountCredentials
+#from oauth2client.service_account import ServiceAccountCredentials
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
 
@@ -25,7 +25,7 @@ def level1(file_path):
     zip_name = input()
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(os.path.basename(file_path)) #no se si os.path.basename funciona para windows
+    myzip.write(file_path) #no se si os.path.basename funciona para windows
     myzip.close()
     return zip_name
 
