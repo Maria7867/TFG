@@ -173,10 +173,10 @@ def main():
                 asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
             if level=='1':
                 zip_name=zip_file(file_path)
-                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
+                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
             if level=='2':
                 zip_name=cifrar(file_path)
-                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
+                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
         else:
             if level=='0':
                 send_normal(sock, file_path, file_name, size, format)
