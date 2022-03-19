@@ -2,11 +2,40 @@
 from mega import Mega
 from zipfile import ZipFile
 import os #para conseguir el final del file_path
-
+import asyncio
 # import required module
 from cryptography.fernet import Fernet
+from filesplit.split import Split
 
-def level1(file_path):
+#D:\Code\p.txt
+def crear():
+    path = os.getcwd()
+    crear_path=path+"\dividir"
+    try:
+        os.mkdir(crear_path)
+    except OSError:
+        print ("Creation of the directory %s failed" % path)
+    else:
+        print ("Successfully created the directory %s " % path)
+    return crear_path
+
+async def dividir_enviar(file_path, m):
+    file_size = os.path.getsize(file_path)
+    print("size: ", file_size)
+    path = crear()
+    split = Split(file_path, path)
+    size_divide=int(file_size/4)
+    print("size: ", size_divide)
+    split_size = split.bysize (size_divide)
+    files = os.listdir(path)
+    for f in files:
+        file_de=path+"\\"+f
+        if f != "manifest":
+            file = m.upload(file_de)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
+            print(f)
+            await asyncio.sleep(1)
+
+def zip_file(file_path):
     print("zip name: ")
     zip_name = input()
     zip_name = zip_name + '.zip'
@@ -16,8 +45,8 @@ def level1(file_path):
     return zip_name
 
 
-def level2 (m, file_path):
-    zip_name=level1(m, file_path)
+def cifrar (file_path):
+    zip_name=zip_file(file_path)
     # key generation
     key = Fernet.generate_key()
 
@@ -44,7 +73,8 @@ def level2 (m, file_path):
     	encrypted_file.write(encrypted)
     print("encrypted", encrypted_file)
 
-    file = m.upload(zip_name)
+    return zip_name
+
 
 def main():
     mega = Mega()
@@ -59,25 +89,33 @@ def main():
 
     print("choose level: ")
     level = input()
-    #get files
-    #files = m.get_files()
-
-
-    #upload files
-    #folder=m.find('fotos')
 
     print("level:", level)
     print("file path: ")
     file_path = input()
-    if level=='0':
-        file = m.upload(file_path)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
-    if level=='1':
-        zip_name=level1(file_path)
-        file = m.upload(zip_name)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
-    #m.get_upload_link(file)
-    # see mega.py for destination and filename options
-    if level=='2':
-        level2(m, file_path)
+    file_size = os.path.getsize(file_path)
+    if file_size>200:
+        if level=='0':
+            asyncio.run(dividir_enviar(file_path, m))
+        if level=='1':
+            zip_name=zip_file(file_path)
+            asyncio.run(dividir_enviar(zip_name, m))
+        #m.get_upload_link(file)
+        # see mega.py for destination and filename options
+        if level=='2':
+            zip_name=cifrar(file_path)
+            asyncio.run(dividir_enviar(zip_name, m))
+    else:
+        if level=='0':
+            file = m.upload(file_path)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
+        if level=='1':
+            zip_name=zip_file(file_path)
+            file = m.upload(zip_name)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
+        #m.get_upload_link(file)
+        # see mega.py for destination and filename options
+        if level=='2':
+            zip_name=cifrar(file_path)
+            file = m.upload(zip_name)
 
 if __name__ == '__main__':
     main()
