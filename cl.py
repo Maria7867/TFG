@@ -2,11 +2,77 @@
 import socket
 import sys
 import os
+import asyncio
 
 from zipfile import ZipFile
 from cryptography.fernet import Fernet
+from filesplit.split import Split
 
-def level0(sock, file_path, file_name, size, format):
+#D:\Code\p.txt
+def crear():
+    path = os.getcwd()
+    crear_path=path+"\dividir"
+    try:
+        os.mkdir(crear_path)
+    except OSError:
+        print ("Creation of the directory %s failed" % path)
+    else:
+        print ("Successfully created the directory %s " % path)
+    return crear_path
+
+async def dividir_enviar_normal(file_path, sock, size, format):
+    file_size = os.path.getsize(file_path)
+    print("size: ", file_size)
+    path = crear()
+    split = Split(file_path, path)
+    size_divide=int(file_size/4)
+    print("size: ", size_divide)
+    split_size = split.bysize (size_divide)
+    files = os.listdir(path)
+    for f in files:
+        file_de=path+"\\"+f
+        if f != "manifest":
+            """ Opening and reading the file data. """
+            file = open(file_de, "r")
+            data = file.read()
+            """ Sending the filename to the server. """
+            sock.send(f.encode(format))
+            msg = sock.recv(size).decode(format)
+            """ Sending the file data to the server. """
+            sock.send(data.encode(format))
+            msg = sock.recv(size).decode(format)
+            """ Closing the file. """
+            file.close()
+            print(f)
+            await asyncio.sleep(1)
+
+async def dividir_enviar_byte(file_path, sock, size, format):
+    file_size = os.path.getsize(file_path)
+    print("size: ", file_size)
+    path = crear()
+    split = Split(file_path, path)
+    size_divide=int(file_size/4)
+    print("size: ", size_divide)
+    split_size = split.bysize (size_divide)
+    files = os.listdir(path)
+    for f in files:
+        file_de=path+"\\"+f
+        if f != "manifest":
+            """ Opening and reading the file data. """
+            file = open(file_de, "rb")
+            data = file.read()
+            """ Sending the filename to the server. """
+            sock.send(f.encode(format))
+            msg = sock.recv(size).decode(format)
+            """ Sending the file data to the server. """
+            sock.send(data.encode(format))
+            msg = sock.recv(size).decode(format)
+            """ Closing the file. """
+            file.close()
+            print(f)
+            await asyncio.sleep(1)
+
+def send_normal(sock, file_path, file_name, size, format):
     """ Opening and reading the file data. """
     file = open(file_path, "r")
     data = file.read()
@@ -19,7 +85,7 @@ def level0(sock, file_path, file_name, size, format):
     """ Closing the file. """
     file.close()
 
-def level11(sock, file_path, file_name, size, format):
+def send_bytes(sock, file_path, file_name, size, format):
     """ Opening and reading the file data. """
     file = open(file_path, "rb")
     data = file.read()
@@ -32,7 +98,7 @@ def level11(sock, file_path, file_name, size, format):
     """ Closing the file. """
     file.close()
 
-def level1(file_path):
+def zip_file(file_path):
     print("zip name: ")
     zip_name = input()
     zip_name = zip_name + '.zip'
@@ -41,8 +107,8 @@ def level1(file_path):
     myzip.close()
     return zip_name
 
-def level2 (file_path):
-    zip_name=level1(file_path)
+def cifrar (file_path):
+    zip_name=zip_file(file_path)
     # key generation
     key = Fernet.generate_key()
 
@@ -100,17 +166,29 @@ def main():
 
     #print >>sys.stderr, 'connecting to %s port %s' % server_address
     sock.connect(server_address)
+    file_size = os.path.getsize(file_path)
     try:
-        if level=='0':
-            level0(sock, file_path, file_name, size, format)
-        if level=='1':
-            zip_name=level1(file_path)
-            level11(sock, zip_name, zip_name, size, format)
-        if level=='2':
-            zip_name=level2(file_path)
-            level11(sock, zip_name, zip_name, size, format)
+        if file_size>200:
+            if level=='0':
+                asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
+            if level=='1':
+                zip_name=zip_file(file_path)
+                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
+            if level=='2':
+                zip_name=cifrar(file_path)
+                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
+        else:
+            if level=='0':
+                send_normal(sock, file_path, file_name, size, format)
+            if level=='1':
+                zip_name=zip_file(file_path)
+                send_bytes(sock, zip_name, zip_name, size, format)
+            if level=='2':
+                zip_name=cifrar(file_path)
+                send_bytes(sock, zip_name, zip_name, size, format)
     finally:
         #print >>sys.stderr, 'closing socket'
         sock.close()
+        print("1")
 if __name__ == "__main__":
     main()

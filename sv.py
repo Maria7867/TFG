@@ -1,8 +1,13 @@
 #server
 import socket
 import sys
+import os
+import asyncio
 
-def level0(connection, size, format):
+from filesplit.split import Split
+#D:\Code\p.txt
+
+def recv_normal(connection, size, format):
     """ Receiving the filename from the client. """
     filename = connection.recv(size).decode(format)
     file = open(filename, "w")
@@ -14,9 +19,9 @@ def level0(connection, size, format):
     """ Closing the file. """
     file.close()
     """ Closing the connection. """
-    connection.close()
+    #connection.close()
 
-def level1(connection, size, format):
+def recv_bytes(connection, size, format):
     """ Receiving the filename from the client. """
     filename = connection.recv(size).decode(format)
     file = open(filename, "wb")
@@ -28,7 +33,7 @@ def level1(connection, size, format):
     """ Closing the file. """
     file.close()
     """ Closing the connection. """
-    connection.close()
+    #connection.close()
 
 def main():
     # Create a TCP/IP socket
@@ -62,14 +67,15 @@ def main():
         connection, client_address = sock.accept()
         try:
             if level=='0':
-                level0(connection, size, format)
+                recv_normal(connection, size, format)
             if level=='1':
-                level1(connection, size, format)
+                recv_bytes(connection, size, format)
             if level=='2':
-                level1(connection, size, format)
+                recv_bytes(connection, size, format)
         finally:
             # Clean up the connection
-            sock.close()
+            #sock.close()
+            connection.close()
 
 if __name__ == "__main__":
     main()
