@@ -143,7 +143,7 @@ def main():
         if level=='0':
             #We have to make a request hash to tell the google API what we're giving it
 
-            var_mimetype='image/jpeg'
+            var_mimetype='text/plain'
 
             asyncio.run(dividir_enviar(file_path, var_mimetype, drive_api))
 
@@ -169,7 +169,7 @@ def main():
             #We have to make a request hash to tell the google API what we're giving it
             body = {'name': file_name, 'mimeType': 'application/vnd.google-apps.photo'}
 
-            media = MediaFileUpload(file_path, mimetype='image/jpeg')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+            media = MediaFileUpload(file_path, mimetype='text/plain')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
         	#Now we're doing the actual post, creating a new file of the uploaded type
             fiahl = drive_api.files().create(body=body, media_body=media).execute()
