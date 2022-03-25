@@ -11,6 +11,7 @@ from filesplit.split import Split
 def crear():
     path = os.getcwd()
     crear_path=path+"\dividir"
+    #crear_path=path+"/dividir" linux
     try:
         os.mkdir(crear_path)
     except OSError:
@@ -30,17 +31,18 @@ async def dividir_enviar(file_path, m):
     files = os.listdir(path)
     for f in files:
         file_de=path+"\\"+f
-        if f != "manifest":
-            file = m.upload(file_de)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
-            print(f)
-            await asyncio.sleep(1)
+        #file_de=path+"/"+f linux
+        #if f != "manifest":
+        file = m.upload(file_de)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
+        print(f)
+        await asyncio.sleep(1)
 
 def zip_file(file_path):
     print("zip name: ")
     zip_name = input()
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(os.path.basename(file_path)) #no se si os.path.basename funciona para windows
+    myzip.write(file_path) #no se si os.path.basename funciona para windows
     myzip.close()
     return zip_name
 
