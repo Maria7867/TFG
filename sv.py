@@ -57,9 +57,6 @@ def main():
     print("Port: ")
     port=int(input())
 
-    print("level: ")
-    level=input()
-
     # Bind the socket to the port
     server_address = (host_name, port) #localhost, 10000
 
