@@ -3,6 +3,7 @@ import socket
 import sys
 import os
 import asyncio
+import math
 
 from zipfile import ZipFile
 from cryptography.fernet import Fernet
@@ -20,32 +21,6 @@ def crear():
         print ("Successfully created the directory %s " % path)
     return crear_path
 
-async def dividir_enviar_normal(file_path, sock, size, format):
-    file_size = os.path.getsize(file_path)
-    print("size: ", file_size)
-    path = crear()
-    split = Split(file_path, path)
-    size_divide=int(file_size/4)
-    print("size: ", size_divide)
-    split_size = split.bysize (size_divide)
-    files = os.listdir(path)
-    for f in files:
-        file_de=path+"\\"+f
-        if f != "manifest":
-            """ Opening and reading the file data. """
-            file = open(file_de, "r")
-            data = file.read()
-            """ Sending the filename to the server. """
-            sock.send(f.encode(format))
-            msg = sock.recv(size).decode(format)
-            """ Sending the file data to the server. """
-            sock.send(data.encode(format))
-            msg = sock.recv(size).decode(format)
-            """ Closing the file. """
-            file.close()
-            print(f)
-            await asyncio.sleep(1)
-
 async def dividir_enviar_byte(file_path, sock, size, format):
     file_size = os.path.getsize(file_path)
     print("size: ", file_size)
@@ -55,37 +30,36 @@ async def dividir_enviar_byte(file_path, sock, size, format):
     print("size: ", size_divide)
     split_size = split.bysize (size_divide)
     files = os.listdir(path)
+    """ Enviando el indicador de archivo grande. """
+    indicador="big"
+    sock.send(indicador.encode(format))
+    msg = sock.recv(size).decode(format)
+    """ Sending the number of divisions to the server. """
+    numero_div=math.ceil(file_size/size_divide)
+    sock.send(str(numero_div).encode(format))
+    msg = sock.recv(size).decode(format)
     for f in files:
         file_de=path+"\\"+f
-        if f != "manifest":
-            """ Opening and reading the file data. """
-            file = open(file_de, "rb")
-            data = file.read()
-            """ Sending the filename to the server. """
-            sock.send(f.encode(format))
-            msg = sock.recv(size).decode(format)
-            """ Sending the file data to the server. """
-            sock.send(data.encode(format))
-            msg = sock.recv(size).decode(format)
-            """ Closing the file. """
-            file.close()
-            print(f)
-            await asyncio.sleep(1)
-
-def send_normal(sock, file_path, file_name, size, format):
-    """ Opening and reading the file data. """
-    file = open(file_path, "r")
-    data = file.read()
-    """ Sending the filename to the server. """
-    sock.send(file_name.encode(format))
-    msg = sock.recv(size).decode(format)
-    """ Sending the file data to the server. """
-    sock.send(data.encode(format))
-    msg = sock.recv(size).decode(format)
-    """ Closing the file. """
-    file.close()
+        #if f != "manifest":
+        """ Opening and reading the file data. """
+        file = open(file_de, "rb")
+        data = file.read()
+        """ Sending the filename to the server. """
+        sock.send(f.encode(format))
+        msg = sock.recv(size).decode(format)
+        """ Sending the file data to the server. """
+        sock.send(data)
+        msg = sock.recv(size).decode(format)
+        """ Closing the file. """
+        file.close()
+        print(f)
+        await asyncio.sleep(1)
 
 def send_bytes(sock, file_path, file_name, size, format):
+    """ Enviando el indicador de archivo grande. """
+    indicador="small"
+    sock.send(indicador.encode(format))
+    msg = sock.recv(size).decode(format)
     """ Opening and reading the file data. """
     file = open(file_path, "rb")
     data = file.read()
@@ -170,7 +144,8 @@ def main():
     try:
         if file_size>200:
             if level=='0':
-                asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
+                #asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
+                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
             if level=='1':
                 zip_name=zip_file(file_path)
                 asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
@@ -179,7 +154,8 @@ def main():
                 asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
         else:
             if level=='0':
-                send_normal(sock, file_path, file_name, size, format)
+                #send_normal(sock, file_path, file_name, size, format)
+                send_bytes(sock, file_path, file_name, size, format)
             if level=='1':
                 zip_name=zip_file(file_path)
                 send_bytes(sock, zip_name, zip_name, size, format)
@@ -189,6 +165,5 @@ def main():
     finally:
         #print >>sys.stderr, 'closing socket'
         sock.close()
-        print("1")
 if __name__ == "__main__":
     main()

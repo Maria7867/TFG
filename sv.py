@@ -7,33 +7,45 @@ import asyncio
 from filesplit.split import Split
 #D:\Code\p.txt
 
-def recv_normal(connection, size, format):
-    """ Receiving the filename from the client. """
-    filename = connection.recv(size).decode(format)
-    file = open(filename, "w")
-    connection.send("Filename received.".encode(format))
-    """ Receiving the file data from the client. """
-    data = connection.recv(size).decode(format)
-    file.write(data)
-    connection.send("File data received".encode(format))
-    """ Closing the file. """
-    file.close()
-    """ Closing the connection. """
-    #connection.close()
-
 def recv_bytes(connection, size, format):
-    """ Receiving the filename from the client. """
-    filename = connection.recv(size).decode(format)
-    file = open(filename, "wb")
-    connection.send("Filename received.".encode(format))
-    """ Receiving the file data from the client. """
-    data = connection.recv(size)
-    file.write(data)
-    connection.send("File data received".encode(format))
-    """ Closing the file. """
-    file.close()
-    """ Closing the connection. """
-    #connection.close()
+    """ Receiving the indicator of size. """
+    data = connection.recv(size).decode(format)
+    size_file=data
+    connection.send("size data received".encode(format))
+    if size_file=='small':
+        """ Receiving the filename from the client. """
+        filename = connection.recv(size).decode(format)
+        file = open(filename, "wb")
+        connection.send("Filename received.".encode(format))
+        """ Receiving the file data from the client. """
+        data = connection.recv(size)
+        file.write(data)
+        connection.send("File data received".encode(format))
+        """ Closing the file. """
+        file.close()
+        """ Closing the connection. """
+        #connection.close()
+    else:
+        """ Receiving the indicator of size. """
+        data = connection.recv(size).decode(format)
+        division=int(data)
+        division+=1
+        connection.send("division data received".encode(format))
+        while division!=0:
+            """ Receiving the filename from the client. """
+            filename = connection.recv(size).decode(format)
+            file = open(filename, "wb")
+            connection.send("Filename received.".encode(format))
+            """ Receiving the file data from the client. """
+            data = connection.recv(size)
+            file.write(data)
+            connection.send("File data received".encode(format))
+            """ Closing the file. """
+            file.close()
+            """ Closing the connection. """
+            division-=1
+            #connection.close()
+
 
 def main():
     # Create a TCP/IP socket
@@ -66,12 +78,8 @@ def main():
         #print >>sys.stderr, 'waiting for a connection'
         connection, client_address = sock.accept()
         try:
-            if level=='0':
-                recv_normal(connection, size, format)
-            if level=='1':
-                recv_bytes(connection, size, format)
-            if level=='2':
-                recv_bytes(connection, size, format)
+            recv_bytes(connection, size, format)
+
         finally:
             # Clean up the connection
             #sock.close()
