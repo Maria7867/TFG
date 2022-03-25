@@ -32,7 +32,7 @@ def crear():
         print ("Successfully created the directory %s " % path)
     return crear_path
 
-async def dividir_enviar(file_path, body, var_mimetype, drive_api):
+async def dividir_enviar(file_path, var_mimetype, drive_api):
     file_size = os.path.getsize(file_path)
     print("size: ", file_size)
     path = crear()
@@ -41,14 +41,23 @@ async def dividir_enviar(file_path, body, var_mimetype, drive_api):
     print("size: ", size_divide)
     split_size = split.bysize (size_divide)
     files = os.listdir(path)
+    os.chdir(path)
+    for f in files:
+        if f == "manifest":
+            name=f+".zip"
+            myzip=ZipFile(name, 'w')
+            myzip.write(f) #myzip.write(file_de)
+            myzip.close()
+            os.remove(f)
+    files = os.listdir(path)
     for f in files:
         file_de=path+"\\"+f
-        if f != "manifest":
-            #Now we're doing the actual post, creating a new file of the uploaded type
-            media = MediaFileUpload(file_de, mimetype=var_mimetype)#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
-            fiahl = drive_api.files().create(body=body, media_body=media).execute()
-            print(f)
-            await asyncio.sleep(1)
+        #Now we're doing the actual post, creating a new file of the uploaded type
+        body = {'name': f, 'mimeType': var_mimetype}
+        media = MediaFileUpload(file_de, mimetype=var_mimetype)#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+        fiahl = drive_api.files().create(body=body, media_body=media).execute()
+        print(f)
+        await asyncio.sleep(1)
 
 
 def zip_file(file_path):
@@ -133,29 +142,27 @@ def main():
     if file_size>200:
         if level=='0':
             #We have to make a request hash to tell the google API what we're giving it
-            body = {'name': file_name, 'mimeType': 'application/vnd.google-apps.photo'}
 
             var_mimetype='image/jpeg'
 
-            asyncio.run(dividir_enviar(file_path, body, var_mimetype, drive_api))
+            asyncio.run(dividir_enviar(file_path, var_mimetype, drive_api))
 
         	#Because verbosity is nice
             print ("Created file")
 
         if level=='1':
             #We have to make a request hash to tell the google API what we're giving it
-            body = {'name': file_name, 'mimeType': 'application/zip'} #application/vnd.google-apps.folder
+             #application/vnd.google-apps.folder
             zip_name=zip_file(file_path)
             var_mimetype='application/zip'
-            asyncio.run(dividir_enviar(zip_name, body, var_mimetype, drive_api))
+            asyncio.run(dividir_enviar(zip_name, var_mimetype, drive_api))
         	#Because verbosity is nice
             print ("Created")
 
         if level=='2':
-            body = {'name': file_name, 'mimeType': 'application/zip'} #application/vnd.google-apps.folder
             zip_name=cifrar(drive_api, file_name, file_path)
             var_mimetype='application/zip'
-            asyncio.run(dividir_enviar(zip_name, body, var_mimetype, drive_api))
+            asyncio.run(dividir_enviar(zip_name, var_mimetype, drive_api))
 
     else:
         if level=='0':
