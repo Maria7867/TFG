@@ -51,14 +51,14 @@ def main():
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    print("Host name: ")
-    host_name=input()
+    print("IP: ")
+    IP=input()
 
     print("Port: ")
     port=int(input())
 
     # Bind the socket to the port
-    server_address = (host_name, port) #localhost, 10000
+    server_address = (IP, port) #localhost, 10000
 
     size = 1024
     format = "utf-8"

@@ -3,6 +3,7 @@ from mega import Mega
 from zipfile import ZipFile
 import os #para conseguir el final del file_path
 import asyncio
+import platform
 # import required module
 from cryptography.fernet import Fernet
 from filesplit.split import Split

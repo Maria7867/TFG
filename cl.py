@@ -123,8 +123,8 @@ def main():
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    print("Host name: ")
-    host_name=input()
+    print("IP: ")
+    IP=input()
 
     print("Port: ")
     port=int(input())
@@ -143,7 +143,7 @@ def main():
     #data=file.read()#buffer
 
     # Connect the socket to the port where the server is listening
-    server_address = (host_name, port) #localhost, 10000
+    server_address = (IP, port) #localhost, 10000
 
     #print >>sys.stderr, 'connecting to %s port %s' % server_address
     sock.connect(server_address)

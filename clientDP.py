@@ -4,6 +4,7 @@ from dropbox import DropboxOAuth2FlowNoRedirect
 from zipfile import ZipFile
 import os #para conseguir el final del file_path y para conseguir el tamaño de file
 import asyncio
+import platform
 # import required module
 from cryptography.fernet import Fernet
 from filesplit.split import Split
@@ -134,7 +135,7 @@ def main():
     print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
     file_to = input ()
 
-    dbx = dropbox.Dropbox('sl.BERKoQsr_Rqo4qLh4OdKLbyLYYVGBg0c99o7QW0AUkaWAnW0b3y6WslxVyKDvt3LM8x655pwEt6zkcOATQjOW-__I2uy8oINHBbIKCxmpYsxJORVwwU5IZ3ulUa45t0NjZ4HVaY') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
+    dbx = dropbox.Dropbox('sl.BEqEGdRgmzDRT_jDV-y-ZK9MgrCJ-YsShF_O3s_Fux6tALfVWCrdbhcrBRsBMikb-lJPtnH7urQK_gueqOy7I7IVx3sc5TPBxsMwskSJ7JCZueLXf4600RqPFiBr5Jopfd6f6XU') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
     #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
     file_size = os.path.getsize(file_from)
     print("FILE SIZE", file_size)
