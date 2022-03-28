@@ -10,7 +10,10 @@ from filesplit.split import Split
 #D:\Code\p.txt
 def crear():
     path = os.getcwd()
-    crear_path=path+"\dividir"
+    if platform.system()=="Windows":
+        crear_path=path+"\dividir"
+    if platform.system()=="Linux":
+        crear_path=path+"/dividir"
     #crear_path=path+"/dividir" linux
     try:
         os.mkdir(crear_path)
@@ -30,7 +33,10 @@ async def dividir_enviar(file_path, m):
     split_size = split.bysize (size_divide)
     files = os.listdir(path)
     for f in files:
-        file_de=path+"\\"+f
+        if platform.system()=="Windows":
+            file_de=path+"\\"+f
+        if platform.system()=="Linux":
+            file_de=path+"/"+f
         #file_de=path+"/"+f linux
         #if f != "manifest":
         file = m.upload(file_de)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]

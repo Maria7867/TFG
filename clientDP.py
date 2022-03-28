@@ -11,7 +11,10 @@ from filesplit.split import Split
 #D:\Code\p.txt
 def crear():
     path = os.getcwd()
-    crear_path=path+"\dividir"
+    if platform.system()=="Windows":
+        crear_path=path+"\dividir"
+    if platform.system()=="Linux":
+        crear_path=path+"/dividir"
     try:
         os.mkdir(crear_path)
     except OSError:
@@ -31,11 +34,15 @@ async def dividir_enviar(file_from, dbx):
     files = os.listdir(path)
     for f in files:
         file_to="/"+f
-        file_de=path+"\\"+f
-        if f != "manifest":
-            dbx.files_upload(open(file_de, 'rb').read(), file_to)
-            print(f)
-            await asyncio.sleep(1)
+        if platform.system()=="Windows":
+            file_de=path+"\\"+f
+        if platform.system()=="Linux":
+            file_de=path+"/"+f
+        #if f != "manifest":
+        print(file_de)
+        dbx.files_upload(open(file_de, 'rb').read(), file_to)
+        print(f)
+        await asyncio.sleep(1)
 
 def zip_file(file_from):
     print("zip name: ")
@@ -127,9 +134,10 @@ def main():
     print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
     file_to = input ()
 
-    dbx = dropbox.Dropbox('sl.BD-tvmEBYhZYzko38qJXe7Hd5HdHUvUgSE3Sbt-zlaCJLBNnLd47FLOlijOJqU3EXrQnerUHaM5bII91VLZKWP4kfmDLKTLfJsne3AVf_PeEb1o4k5-ZgV5OmrJkklgUhqRGHHc') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
+    dbx = dropbox.Dropbox('sl.BERKoQsr_Rqo4qLh4OdKLbyLYYVGBg0c99o7QW0AUkaWAnW0b3y6WslxVyKDvt3LM8x655pwEt6zkcOATQjOW-__I2uy8oINHBbIKCxmpYsxJORVwwU5IZ3ulUa45t0NjZ4HVaY') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
     #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
     file_size = os.path.getsize(file_from)
+    print("FILE SIZE", file_size)
     if file_size>200:
         if level=='0':
             asyncio.run(dividir_enviar(file_from, dbx))

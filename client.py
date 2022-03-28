@@ -23,7 +23,10 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def crear():
     path = os.getcwd()
-    crear_path=path+"\dividir"
+    if platform.system()=="Windows":
+        crear_path=path+"\dividir"
+    if platform.system()=="Linux":
+        crear_path=path+"/dividir"
     try:
         os.mkdir(crear_path)
     except OSError:
@@ -49,14 +52,23 @@ async def dividir_enviar(file_path, var_mimetype, drive_api):
             myzip.write(f) #myzip.write(file_de)
             myzip.close()
             os.remove(f)
-    files = os.listdir(path)
-    for f in files:
-        file_de=path+"\\"+f
-        #Now we're doing the actual post, creating a new file of the uploaded type
-        body = {'name': f, 'mimeType': var_mimetype}
-        media = MediaFileUpload(file_de, mimetype=var_mimetype)#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
-        fiahl = drive_api.files().create(body=body, media_body=media).execute()
-        print(f)
+            body = {'name': f, 'mimeType': 'application/zip'}
+            if platform.system()=="Windows":
+                upload=path+"\\"+name
+            if platform.system()=="Linux":
+                upload=path+"/"+name
+            media = MediaFileUpload(upload, mimetype='application/zip')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+            fiahl = drive_api.files().create(body=body, media_body=media).execute()
+        else:
+            if platform.system()=="Windows":
+                file_de=path+"\\"+f
+            if platform.system()=="Linux":
+                file_de=path+"/"+f
+            #Now we're doing the actual post, creating a new file of the uploaded type
+            body = {'name': f, 'mimeType': var_mimetype}
+            media = MediaFileUpload(file_de, mimetype=var_mimetype)#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+            fiahl = drive_api.files().create(body=body, media_body=media).execute()
+            print(f)
         await asyncio.sleep(1)
 
 

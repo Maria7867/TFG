@@ -4,6 +4,7 @@ import sys
 import os
 import asyncio
 import math
+import platform
 
 from zipfile import ZipFile
 from cryptography.fernet import Fernet
@@ -12,7 +13,10 @@ from filesplit.split import Split
 #D:\Code\p.txt
 def crear():
     path = os.getcwd()
-    crear_path=path+"\dividir"
+    if platform.system()=="Windows":
+        crear_path=path+"\dividir"
+    if platform.system()=="Linux":
+        crear_path=path+"/dividir"
     try:
         os.mkdir(crear_path)
     except OSError:
@@ -39,7 +43,10 @@ async def dividir_enviar_byte(file_path, sock, size, format):
     sock.send(str(numero_div).encode(format))
     msg = sock.recv(size).decode(format)
     for f in files:
-        file_de=path+"\\"+f
+        if platform.system()=="Windows":
+            file_de=path+"\\"+f
+        if platform.system()=="Linux":
+            file_de=path+"/"+f
         #if f != "manifest":
         """ Opening and reading the file data. """
         file = open(file_de, "rb")
