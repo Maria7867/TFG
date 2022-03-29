@@ -54,7 +54,7 @@ def zip_file(file_path):
     return zip_name
 
 
-def cifrar (file_path):
+def cifrar (file_path, public_key):
     zip_name=zip_file(file_path)
     # key generation
     key = Fernet.generate_key()
@@ -80,6 +80,29 @@ def cifrar (file_path):
     # writing the encrypted data
     with open(zip_name, 'wb') as encrypted_file:
     	encrypted_file.write(encrypted)
+    print("encrypted", encrypted_file)
+
+    '''
+    ZIP Y CIFRAR LA CLAVE PRIVADA
+    '''
+    myzip=ZipFile('filekey.zip', 'w')
+    myzip.write('filekey.key') #no se si os.path.basename funciona para windows
+    myzip.close()
+    os.remove('filekey.key')
+    with open(public_key, 'rb') as filekey:
+    	clave_publica = filekey.read()
+
+    # using the generated key
+    fernet = Fernet(clave_publica)
+
+    with open('filekey.zip', 'rb') as file:
+    	clave_privada = file.read()
+
+    encrypted = fernet.encrypt(clave_privada)
+
+    with open('filekey.zip', 'wb') as encrypted_file:
+    	encrypted_file.write(encrypted)
+
     print("encrypted", encrypted_file)
 
     return zip_name
@@ -112,8 +135,17 @@ def main():
         #m.get_upload_link(file)
         # see mega.py for destination and filename options
         if level=='2':
-            zip_name=cifrar(file_path)
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
+
+            zip_name=cifrar(file_path, public_key)
             asyncio.run(dividir_enviar(zip_name, m))
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    file = m.upload('filekey.zip')
     else:
         if level=='0':
             file = m.upload(file_path)#'/home/maria/Documentos/TFG/Mega/avantasia_cover.jpeg', folder[0]
@@ -123,8 +155,17 @@ def main():
         #m.get_upload_link(file)
         # see mega.py for destination and filename options
         if level=='2':
-            zip_name=cifrar(file_path)
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
+
+            zip_name=cifrar(file_path, public_key)
             file = m.upload(zip_name)
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    file = m.upload('filekey.zip')
 
 if __name__ == '__main__':
     main()

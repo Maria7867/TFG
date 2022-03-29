@@ -71,6 +71,8 @@ async def dividir_enviar(file_path, var_mimetype, drive_api):
             fiahl = drive_api.files().create(body=body, media_body=media).execute()
             print(f)
         await asyncio.sleep(1)
+    os.chdir("..")
+    print("dir: ", os.getcwd())
 
 
 def zip_file(file_path):
@@ -82,7 +84,7 @@ def zip_file(file_path):
     myzip.close()
     return zip_name
 
-def cifrar (drive_api, file_name, file_path):
+def cifrar (drive_api, file_name, file_path, public_key):
     #We have to make a request hash to tell the google API what we're giving it
     zip_name=zip_file(file_path)
     # key generation
@@ -109,6 +111,29 @@ def cifrar (drive_api, file_name, file_path):
     # writing the encrypted data
     with open(zip_name, 'wb') as encrypted_file:
     	encrypted_file.write(encrypted)
+    print("encrypted", encrypted_file)
+
+    '''
+    ZIP Y CIFRAR LA CLAVE PRIVADA
+    '''
+    myzip=ZipFile('filekey.zip', 'w')
+    myzip.write('filekey.key') #no se si os.path.basename funciona para windows
+    myzip.close()
+    os.remove('filekey.key')
+    with open(public_key, 'rb') as filekey:
+    	clave_publica = filekey.read()
+
+    # using the generated key
+    fernet = Fernet(clave_publica)
+
+    with open('filekey.zip', 'rb') as file:
+    	clave_privada = file.read()
+
+    encrypted = fernet.encrypt(clave_privada)
+
+    with open('filekey.zip', 'wb') as encrypted_file:
+    	encrypted_file.write(encrypted)
+
     print("encrypted", encrypted_file)
 
     return zip_name
@@ -173,14 +198,25 @@ def main():
             print ("Created")
 
         if level=='2':
-            zip_name=cifrar(drive_api, file_name, file_path)
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
+
+            zip_name=cifrar(drive_api, file_name, file_path, public_key)
             var_mimetype='application/zip'
             asyncio.run(dividir_enviar(zip_name, var_mimetype, drive_api))
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    body = {'name': 'filekey.zip', 'mimeType': 'application/zip'}
+                    media = MediaFileUpload('filekey.zip', mimetype='application/zip')
+                    fiahl = drive_api.files().create(body=body, media_body=media).execute()
 
     else:
         if level=='0':
             #We have to make a request hash to tell the google API what we're giving it
-            body = {'name': file_name, 'mimeType': 'application/vnd.google-apps.photo'}
+            body = {'name': file_name, 'mimeType': 'text/plain'}
 
             media = MediaFileUpload(file_path, mimetype='text/plain')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
@@ -201,13 +237,22 @@ def main():
         	#Because verbosity is nice
             print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
         if level=='2':
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
 
             body = {'name': file_name, 'mimeType': 'application/zip'} #application/vnd.google-apps.folder
-            zip_name=cifrar(drive_api, file_name, file_path)
+            zip_name=cifrar(drive_api, file_name, file_path, public_key)
             media = MediaFileUpload(zip_name, mimetype='application/zip')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
             #Now we're doing the actual post, creating a new file of the uploaded type
             fiahl = drive_api.files().create(body=body, media_body=media).execute()
-            #Because verbosity is nice
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    body = {'name': 'filekey.zip', 'mimeType': 'application/zip'}
+                    media = MediaFileUpload('filekey.zip', mimetype='application/zip')
+                    fiahl = drive_api.files().create(body=body, media_body=media).execute()
 
 if __name__ == '__main__':
     main()

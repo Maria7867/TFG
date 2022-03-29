@@ -25,7 +25,7 @@ def crear():
         print ("Successfully created the directory %s " % path)
     return crear_path
 
-async def dividir_enviar_byte(file_path, sock, size, format):
+async def dividir_enviar_byte(file_path, sock, size, format, level):
     file_size = os.path.getsize(file_path)
     print("size: ", file_size)
     path = crear()
@@ -34,6 +34,9 @@ async def dividir_enviar_byte(file_path, sock, size, format):
     print("size: ", size_divide)
     split_size = split.bysize (size_divide)
     files = os.listdir(path)
+    """ Sending the level to the server. """
+    sock.send(level.encode(format))
+    msg = sock.recv(size).decode(format)
     """ Enviando el indicador de archivo grande. """
     indicador="big"
     sock.send(indicador.encode(format))
@@ -61,8 +64,27 @@ async def dividir_enviar_byte(file_path, sock, size, format):
         file.close()
         print(f)
         await asyncio.sleep(1)
+    if level=='2':
+        path=os.getcwd()
+        files = os.listdir(path)
+        for f in files:
+            if f == 'filekey.zip':
+                """ Opening and reading the file data. """
+                file = open(f, "rb")
+                data = file.read()
+                """ Sending the filename to the server. """
+                sock.send(f.encode(format))
+                msg = sock.recv(size).decode(format)
+                """ Sending the file data to the server. """
+                sock.send(data)
+                msg = sock.recv(size).decode(format)
+                """ Closing the file. """
+                file.close()
 
-def send_bytes(sock, file_path, file_name, size, format):
+def send_bytes(sock, file_path, file_name, size, format, level):
+    """ Sending the level to the server. """
+    sock.send(level.encode(format))
+    msg = sock.recv(size).decode(format)
     """ Enviando el indicador de archivo grande. """
     indicador="small"
     sock.send(indicador.encode(format))
@@ -78,6 +100,22 @@ def send_bytes(sock, file_path, file_name, size, format):
     msg = sock.recv(size).decode(format)
     """ Closing the file. """
     file.close()
+    if level=='2':
+        path=os.getcwd()
+        files = os.listdir(path)
+        for f in files:
+            if f == 'filekey.zip':
+                """ Opening and reading the file data. """
+                file = open(f, "rb")
+                data = file.read()
+                """ Sending the filename to the server. """
+                sock.send(f.encode(format))
+                msg = sock.recv(size).decode(format)
+                """ Sending the file data to the server. """
+                sock.send(data)
+                msg = sock.recv(size).decode(format)
+                """ Closing the file. """
+                file.close()
 
 def zip_file(file_path):
     print("zip name: ")
@@ -88,7 +126,7 @@ def zip_file(file_path):
     myzip.close()
     return zip_name
 
-def cifrar (file_path):
+def cifrar (file_path, public_key):
     zip_name=zip_file(file_path)
     # key generation
     key = Fernet.generate_key()
@@ -114,6 +152,29 @@ def cifrar (file_path):
     # writing the encrypted data
     with open(zip_name, 'wb') as encrypted_file:
     	encrypted_file.write(encrypted)
+    print("encrypted", encrypted_file)
+
+    '''
+    ZIP Y CIFRAR LA CLAVE PRIVADA
+    '''
+    myzip=ZipFile('filekey.zip', 'w')
+    myzip.write('filekey.key') #no se si os.path.basename funciona para windows
+    myzip.close()
+    os.remove('filekey.key')
+    with open(public_key, 'rb') as filekey:
+        clave_publica = filekey.read()
+
+    # using the generated key
+    fernet = Fernet(clave_publica)
+
+    with open('filekey.zip', 'rb') as file:
+        clave_privada = file.read()
+
+    encrypted = fernet.encrypt(clave_privada)
+
+    with open('filekey.zip', 'wb') as encrypted_file:
+        encrypted_file.write(encrypted)
+
     print("encrypted", encrypted_file)
 
     return zip_name
@@ -152,23 +213,29 @@ def main():
         if file_size>200:
             if level=='0':
                 #asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
-                asyncio.run(dividir_enviar_byte(file_path, sock, size, format))
+                asyncio.run(dividir_enviar_byte(file_path, sock, size, format, level))
             if level=='1':
                 zip_name=zip_file(file_path)
-                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
+                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format, level))
             if level=='2':
-                zip_name=cifrar(file_path)
-                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format))
+                print("public_key path: ") #/home/maria/Documentos/TFG/pcliente_pserver/avantasia_cover.jpeg || D:\Code\p.txt
+                public_key=input()
+
+                zip_name=cifrar(file_path, public_key)
+                asyncio.run(dividir_enviar_byte(zip_name, sock, size, format, level))
         else:
             if level=='0':
                 #send_normal(sock, file_path, file_name, size, format)
-                send_bytes(sock, file_path, file_name, size, format)
+                send_bytes(sock, file_path, file_name, size, format, level)
             if level=='1':
                 zip_name=zip_file(file_path)
-                send_bytes(sock, zip_name, zip_name, size, format)
+                send_bytes(sock, zip_name, zip_name, size, format, level)
             if level=='2':
-                zip_name=cifrar(file_path)
-                send_bytes(sock, zip_name, zip_name, size, format)
+                print("public_key path: ") #/home/maria/Documentos/TFG/pcliente_pserver/avantasia_cover.jpeg || D:\Code\p.txt
+                public_key=input()
+                
+                zip_name=cifrar(file_path, public_key)
+                send_bytes(sock, zip_name, zip_name, size, format, level)
     finally:
         #print >>sys.stderr, 'closing socket'
         sock.close()

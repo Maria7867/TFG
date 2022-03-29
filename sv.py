@@ -8,6 +8,9 @@ from filesplit.split import Split
 #D:\Code\p.txt
 
 def recv_bytes(connection, size, format):
+    """ Receiving the level from the client. """
+    level = connection.recv(size).decode(format)
+    connection.send("Level received.".encode(format))
     """ Receiving the indicator of size. """
     data = connection.recv(size).decode(format)
     size_file=data
@@ -45,6 +48,18 @@ def recv_bytes(connection, size, format):
             """ Closing the connection. """
             division-=1
             #connection.close()
+    if level=='2':
+        """ Receiving the filename from the client. """
+        filename = connection.recv(size).decode(format)
+        file = open(filename, "wb")
+        connection.send("Filename received.".encode(format))
+        """ Receiving the file data from the client. """
+        data = connection.recv(size)
+        file.write(data)
+        connection.send("File data received".encode(format))
+        """ Closing the file. """
+        file.close()
+        """ Closing the connection. """
 
 
 def main():

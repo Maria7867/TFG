@@ -54,7 +54,7 @@ def zip_file(file_from):
     myzip.close()
     return zip_name
 
-def cifrar (dbx, file_from):
+def cifrar (dbx, file_from, public_key):
     zip_name=zip_file(file_from)
     # key generation
     key = Fernet.generate_key()
@@ -82,8 +82,30 @@ def cifrar (dbx, file_from):
     	encrypted_file.write(encrypted)
     print("encrypted", encrypted_file)
 
-    return zip_name
+    '''
+    ZIP Y CIFRAR LA CLAVE PRIVADA
+    '''
+    myzip=ZipFile('filekey.zip', 'w')
+    myzip.write('filekey.key') #no se si os.path.basename funciona para windows
+    myzip.close()
+    os.remove('filekey.key')
+    with open(public_key, 'rb') as filekey:
+    	clave_publica = filekey.read()
 
+    # using the generated key
+    fernet = Fernet(clave_publica)
+
+    with open('filekey.zip', 'rb') as file:
+    	clave_privada = file.read()
+
+    encrypted = fernet.encrypt(clave_privada)
+
+    with open('filekey.zip', 'wb') as encrypted_file:
+    	encrypted_file.write(encrypted)
+
+    print("encrypted", encrypted_file)
+
+    return zip_name
 
 def main():
     '''
@@ -135,7 +157,7 @@ def main():
     print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
     file_to = input ()
 
-    dbx = dropbox.Dropbox('sl.BEqEGdRgmzDRT_jDV-y-ZK9MgrCJ-YsShF_O3s_Fux6tALfVWCrdbhcrBRsBMikb-lJPtnH7urQK_gueqOy7I7IVx3sc5TPBxsMwskSJ7JCZueLXf4600RqPFiBr5Jopfd6f6XU') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
+    dbx = dropbox.Dropbox('sl.BEtsxgtW0Tftsdj2qnLOzZZehhYPeqa8cwnaf81F2Bf67sM894VI61ikUsos44MLN5oddK1Iv3pqdDPQFLjrjTVjlNR7uwMe0MiO3o4wgbC-gMWooFRU6qYkbpFQEnxTz_8rYkA') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
     #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
     file_size = os.path.getsize(file_from)
     print("FILE SIZE", file_size)
@@ -146,8 +168,22 @@ def main():
             zip_name=zip_file(file_from)
             asyncio.run(dividir_enviar(zip_name, dbx))
         if level=='2':
-            zip_name=cifrar(dbx, file_from)
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
+
+            zip_name=cifrar(dbx, file_from, public_key)
             asyncio.run(dividir_enviar(zip_name, dbx))
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    if platform.system()=="Windows":
+                        og_path=path+"\\filekey.zip"
+                    if platform.system()=="Linux":
+                        og_path=path+"/filekey.zip"
+                    print(og_path)
+                    dbx.files_upload(open(og_path, 'rb').read(), "/filekey.zip")
     else:
         if level=='0':
             dbx.files_upload(open(file_from, 'rb').read(), file_to)
@@ -155,8 +191,23 @@ def main():
             zip_name=zip_file(file_from)
             dbx.files_upload(open(zip_name, 'rb').read(), file_to)
         if level=='2':
-            zip_name=cifrar(dbx, file_from)
+
+            print ("public key path: ")
+            public_key = input () #D:\Code\llave_publica\filekey.key
+
+            zip_name=cifrar(dbx, file_from, public_key)
             dbx.files_upload(open(zip_name, 'rb').read(), file_to)
+
+            path=os.getcwd()
+            files = os.listdir(path)
+            for f in files:
+                if f == 'filekey.zip':
+                    if platform.system()=="Windows":
+                        og_path=path+"\\filekey.zip"
+                    if platform.system()=="Linux":
+                        og_path=path+"/filekey.zip"
+                    print(og_path)
+                    dbx.files_upload(open(og_path, 'rb').read(), "/filekey.zip")
 
 if __name__ == '__main__':
     main()
