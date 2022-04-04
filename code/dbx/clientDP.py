@@ -45,13 +45,25 @@ async def dividir_enviar(file_from, dbx):
         print(f)
         await asyncio.sleep(1)
 
-def zip_file(file_from):
+def zip_file(file_path):
     print("zip name: ")
     zip_name = input()
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(file_from) #no se si os.path.basename funciona para windows
+    if os.path.isdir(file_path): #path it's a directory
+        files = os.listdir(file_path)
+        for f in files:
+            if platform.system()=="Windows":
+                dir=file_path+"\\"+f
+            if platform.system()=="Linux":
+                dir=file_path+"/"+f
+            myzip.write(dir)
+
+    else:  #path it's a normal file
+        myzip.write(file_path) #no se si os.path.basename funciona para windows
+
     myzip.close()
+
     return zip_name
 
 def cifrar (dbx, file_from, public_key):
@@ -154,14 +166,15 @@ def dbx_main():
     level = input()
     print ("File path from your pc: ") #/home/maria/Documentos/TFG/Dropbox/avantasia_cover.jpeg || D:\Code\p.txt
     file_from = input()
-    print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
-    file_to = input ()
 
-    dbx = dropbox.Dropbox('sl.BE-24tOjA3XfztVXS1F4N6SclYlPCWQrrsm8Zq_--brHkFuMUmvUE7O-KgfpMiJ17ku114jybBMWY5MVoZbe6rHkssQMWKOkOA9UCmLvVtMJQwUQXEXx4_xaO7q5fL8hWxqgfwE') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
+    dbx = dropbox.Dropbox('sl.BFDauE1asAkeuttXgjSTbkqRgJnaBlbGwM981qt6TMGgaqLQfF_LiCp1ImqvrfCIDdv1-mX2pfyXvlkHatIZm73LMJjxh8i-Rf0lLX0YWTkmIM2KG-mxD4hbHW-YCeugj38_W1g') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
     #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
     file_size = os.path.getsize(file_from)
     print("FILE SIZE", file_size)
-    if file_size>200:
+    print("size limit in bytes: ")
+    limit = int(input())
+
+    if file_size>limit:
         if level=='0':
             asyncio.run(dividir_enviar(file_from, dbx))
         if level=='1':
@@ -185,6 +198,9 @@ def dbx_main():
                     print(og_path)
                     dbx.files_upload(open(og_path, 'rb').read(), "/filekey.zip")
     else:
+        print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
+        file_to = input ()
+
         if level=='0':
             dbx.files_upload(open(file_from, 'rb').read(), file_to)
         if level=='1':
