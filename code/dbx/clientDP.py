@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import os #para conseguir el final del file_path y para conseguir el tamaño de file
 import asyncio
 import platform
+import configparser
 # import required module
 from cryptography.fernet import Fernet
 from filesplit.split import Split
@@ -46,8 +47,11 @@ async def dividir_enviar(file_from, dbx):
         await asyncio.sleep(1)
 
 def zip_file(file_path):
+    '''
     print("zip name: ")
     zip_name = input()
+    '''
+    zip_name = config['DROPBOX']['ZIP_NAME']
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
     if os.path.isdir(file_path): #path it's a directory
@@ -120,60 +124,30 @@ def cifrar (dbx, file_from, public_key):
     return zip_name
 
 def dbx_main():
-    '''
-    Permisos
-    '''
-    APP_KEY = "5wgihme450n7qj5"
-    APP_SECRET = "21l0rjyue7aygi3"
-
-    # If an application needs a new scope but wants to keep the existing scopes,
-    # you can add include_granted_scopes parameter
-    auth_flow = DropboxOAuth2FlowNoRedirect(APP_KEY,
-                                             consumer_secret=APP_SECRET,
-                                             token_access_type='offline',
-                                             scope=['files.content.read', 'files.content.write', 'files.metadata.read', 'account_info.read'],
-                                             include_granted_scopes='user')
-
-    authorize_url = auth_flow.start()
-    print("1. Go to: " + authorize_url)
-    print("2. Click \"Allow\" (you might have to log in first).")
-    print("3. Copy the authorization code.")
-    auth_code = input("Enter the authorization code here: ").strip()
-
-    try:
-        oauth_result = auth_flow.finish(auth_code)
-        print(oauth_result)
-        # Oauth token has all granted user scopes
-        assert 'account_info.read' in oauth_result.scope
-        assert 'files.metadata.read' in oauth_result.scope
-        assert 'files.content.read' in oauth_result.scope
-        assert 'files.content.write' in oauth_result.scope
-        #print(oauth_result.scope)  # Printing for example
-    except Exception as e:
-        print('Error: %s, Error 3' % (e,))
-        exit(1)
-
-    with dropbox.Dropbox(oauth2_access_token=oauth_result.access_token,
-                         oauth2_access_token_expiration=oauth_result.expires_at,
-                         oauth2_refresh_token=oauth_result.refresh_token,
-                         app_key=APP_KEY,
-                         app_secret=APP_SECRET):
-        print("Successfully set up client!")
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    level = config['DROPBOX']['LEVEL']
+    file_from = config['DROPBOX']['PATH_FROM']
+    limit = int(config['DROPBOX']['LIMIT'])
+    public_key = config['DROPBOX']['PUBLIC_KEY']
+    file_to = config['DROPBOX']['PATH_TO']
     '''
     Upload file
+    '''
     '''
     print("choose level: ")
     level = input()
     print ("File path from your pc: ") #/home/maria/Documentos/TFG/Dropbox/avantasia_cover.jpeg || D:\Code\p.txt
     file_from = input()
-
-    dbx = dropbox.Dropbox('sl.BFDauE1asAkeuttXgjSTbkqRgJnaBlbGwM981qt6TMGgaqLQfF_LiCp1ImqvrfCIDdv1-mX2pfyXvlkHatIZm73LMJjxh8i-Rf0lLX0YWTkmIM2KG-mxD4hbHW-YCeugj38_W1g') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
+    '''
+    dbx = dropbox.Dropbox('sl.BFElYZm3mwZSExy02-ROAE8fh6NIWuPXjUblyRk0Qvtm-Bl17ssE3q8sBinFeNx4FC6-WzCnFY0onb51Rj1vA1_eQD6yH0holg6MT0kIKXstl0l-JdNqnsDFDa89RqBPPzwlvmY') #Este es el token, si no funciona es porque se habrá caducado y hay que generar otro.
     #Genera otro. Y si pasa en drive borra el archivo y ejecuta el código otra vez
     file_size = os.path.getsize(file_from)
     print("FILE SIZE", file_size)
+    '''
     print("size limit in bytes: ")
     limit = int(input())
-
+    '''
     if file_size>limit:
         if level=='0':
             asyncio.run(dividir_enviar(file_from, dbx))
@@ -181,9 +155,10 @@ def dbx_main():
             zip_name=zip_file(file_from)
             asyncio.run(dividir_enviar(zip_name, dbx))
         if level=='2':
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             zip_name=cifrar(dbx, file_from, public_key)
             asyncio.run(dividir_enviar(zip_name, dbx))
 
@@ -198,19 +173,20 @@ def dbx_main():
                     print(og_path)
                     dbx.files_upload(open(og_path, 'rb').read(), "/filekey.zip")
     else:
+        '''
         print ("File path from dropbox: ") #/prueba1/avantasia_cover.jpeg // /avantasia_cover.jpeg o /avantasia_cover.zip
         file_to = input ()
-
+        '''
         if level=='0':
             dbx.files_upload(open(file_from, 'rb').read(), file_to)
         if level=='1':
             zip_name=zip_file(file_from)
             dbx.files_upload(open(zip_name, 'rb').read(), file_to)
         if level=='2':
-
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             zip_name=cifrar(dbx, file_from, public_key)
             dbx.files_upload(open(zip_name, 'rb').read(), file_to)
 
