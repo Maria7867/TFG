@@ -118,12 +118,27 @@ def send_bytes(sock, file_path, file_name, size, format, level):
                 file.close()
 
 def zip_file(file_path):
+    '''
     print("zip name: ")
     zip_name = input()
+    '''
+    zip_name = config['CLIENTE']['ZIP_NAME']
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(file_path) #no se si os.path.basename funciona para windows
+    if os.path.isdir(file_path): #path it's a directory
+        files = os.listdir(file_path)
+        for f in files:
+            if platform.system()=="Windows":
+                dir=file_path+"\\"+f
+            if platform.system()=="Linux":
+                dir=file_path+"/"+f
+            myzip.write(dir)
+
+    else:  #path it's a normal file
+        myzip.write(file_path) #no se si os.path.basename funciona para windows
+
     myzip.close()
+
     return zip_name
 
 def cifrar (file_path, public_key):
@@ -183,9 +198,19 @@ def cifrar (file_path, public_key):
 def cl_main():
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    host = config['CLIENTE']['HOST']
+    port = int(config['CLIENTE']['PORT'])
+    level = config['CLIENTE']['LEVEL']
+    file_path = config['CLIENTE']['PATH_FROM']
+    file_name = config['CLIENTE']['FILE_NAME']
+    limit = int(config['CLIENTE']['LIMIT'])
+    public_key = config['CLIENTE']['PUBLIC_KEY']
 
-    print("IP: ")
-    IP=input()
+    '''
+    print("Host: ")
+    host=input()
 
     print("Port: ")
     port=int(input())
@@ -198,19 +223,24 @@ def cl_main():
 
     print("file_name: ") #/home/maria/Documentos/TFG/pcliente_pserver/avantasia_cover.jpeg || D:\Code\p.txt
     file_name=input()
-
+    '''
     format = "utf-8"
     size = 1024
     #data=file.read()#buffer
 
     # Connect the socket to the port where the server is listening
-    server_address = (IP, port) #localhost, 10000
+    server_address = (host, port) #localhost, 10000
 
     #print >>sys.stderr, 'connecting to %s port %s' % server_address
     sock.connect(server_address)
     file_size = os.path.getsize(file_path)
+    print("FILE SIZE", file_size)
+    '''
+    print("size limit in bytes: ")
+    limit = int(input())
+    '''
     try:
-        if file_size>200:
+        if file_size>limit:
             if level=='0':
                 #asyncio.run(dividir_enviar_normal(file_path, sock, size, format))
                 asyncio.run(dividir_enviar_byte(file_path, sock, size, format, level))
@@ -218,9 +248,10 @@ def cl_main():
                 zip_name=zip_file(file_path)
                 asyncio.run(dividir_enviar_byte(zip_name, sock, size, format, level))
             if level=='2':
+                '''
                 print("public_key path: ") #/home/maria/Documentos/TFG/pcliente_pserver/avantasia_cover.jpeg || D:\Code\p.txt
                 public_key=input()
-
+                '''
                 zip_name=cifrar(file_path, public_key)
                 asyncio.run(dividir_enviar_byte(zip_name, sock, size, format, level))
         else:
@@ -231,9 +262,10 @@ def cl_main():
                 zip_name=zip_file(file_path)
                 send_bytes(sock, zip_name, zip_name, size, format, level)
             if level=='2':
+                '''
                 print("public_key path: ") #/home/maria/Documentos/TFG/pcliente_pserver/avantasia_cover.jpeg || D:\Code\p.txt
                 public_key=input()
-
+                '''
                 zip_name=cifrar(file_path, public_key)
                 send_bytes(sock, zip_name, zip_name, size, format, level)
     finally:
