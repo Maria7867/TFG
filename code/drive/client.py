@@ -13,6 +13,7 @@ from zipfile import ZipFile
 import os #para conseguir el final del file_path
 import asyncio
 import platform
+import configparser
 # import required module
 from cryptography.fernet import Fernet
 from filesplit.split import Split
@@ -76,12 +77,27 @@ async def dividir_enviar(file_path, var_mimetype, drive_api):
 
 
 def zip_file(file_path):
+    '''
     print("zip name: ")
     zip_name = input()
+    '''
+    zip_name = config['DRIVE']['ZIP_NAME']
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(file_path) #no se si os.path.basename funciona para windows
+    if os.path.isdir(file_path): #path it's a directory
+        files = os.listdir(file_path)
+        for f in files:
+            if platform.system()=="Windows":
+                dir=file_path+"\\"+f
+            if platform.system()=="Linux":
+                dir=file_path+"/"+f
+            myzip.write(dir)
+
+    else:  #path it's a normal file
+        myzip.write(file_path) #no se si os.path.basename funciona para windows
+
     myzip.close()
+
     return zip_name
 
 def cifrar (drive_api, file_name, file_path, public_key):
@@ -166,25 +182,49 @@ def dv_main():
     drive_api = build('drive', 'v3', credentials=creds)
 	#Now build our api object, thing
 	#drive_api = build('drive', 'v3', credentials=creds)
+    '''
+    Upload
+    '''
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    level = config['DRIVE']['LEVEL']
+    file_name = config['DRIVE']['FILE_NAME']
+    file_path = config['DRIVE']['PATH_FROM']
+    limit = int(config['DRIVE']['LIMIT'])
+    public_key = config['DRIVE']['PUBLIC_KEY']
+
+    '''
     print("choose level: ")
     level = input()
 
     print("file name: ")
     file_name = input()
-
+    '''
     print ("Uploading file " + file_name + "...")
 
 	##Now create the media file upload object and tell it what file to upload,
 	#in this case 'test.html'
+    '''
     print("file path: ")
     file_path = input()
-
+    '''
     file_size = os.path.getsize(file_path)
-    if file_size>200:
+    print("FILE SIZE", file_size)
+    '''
+    print("size limit in bytes: ")
+    limit = int(input())
+    '''
+    if file_size>limit:
         if level=='0':
             #We have to make a request hash to tell the google API what we're giving it
+            name, extension = os.path.splitext(file_path)
 
-            var_mimetype='text/plain'
+            if extension == '.txt':
+                var_mimetype='text/plain'
+            if extension == '.pdf':
+                var_mimetype='text/pdf'
+            if extension == '.jpeg':
+                var_mimetype='image/jpeg'
 
             asyncio.run(dividir_enviar(file_path, var_mimetype, drive_api))
 
@@ -201,9 +241,10 @@ def dv_main():
             print ("Created")
 
         if level=='2':
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             zip_name=cifrar(drive_api, file_name, file_path, public_key)
             var_mimetype='application/zip'
             asyncio.run(dividir_enviar(zip_name, var_mimetype, drive_api))
@@ -218,10 +259,18 @@ def dv_main():
 
     else:
         if level=='0':
-            #We have to make a request hash to tell the google API what we're giving it
-            body = {'name': file_name, 'mimeType': 'text/plain'}
+            name, extension = os.path.splitext(file_path)
 
-            media = MediaFileUpload(file_path, mimetype='text/plain')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
+            if extension == '.txt':
+                var_mimetype='text/plain'
+            if extension == '.pdf':
+                var_mimetype='text/pdf'
+            if extension == '.jpeg':
+                var_mimetype='image/jpeg'
+            #We have to make a request hash to tell the google API what we're giving it
+            body = {'name': file_name, 'mimeType': var_mimetype}
+
+            media = MediaFileUpload(file_path, mimetype=var_mimetype)#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
 
         	#Now we're doing the actual post, creating a new file of the uploaded type
             fiahl = drive_api.files().create(body=body, media_body=media).execute()
@@ -240,9 +289,10 @@ def dv_main():
         	#Because verbosity is nice
             print ("Created file '%s' id '%s'." % (fiahl.get('name'), fiahl.get('id')))
         if level=='2':
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             body = {'name': file_name, 'mimeType': 'application/zip'} #application/vnd.google-apps.folder
             zip_name=cifrar(drive_api, file_name, file_path, public_key)
             media = MediaFileUpload(zip_name, mimetype='application/zip')#'/home/maria/Documentos/TFG/drivepy/avantasia_cover.jpeg'
