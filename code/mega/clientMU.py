@@ -4,17 +4,30 @@ from zipfile import ZipFile
 import os #para conseguir el final del file_path
 import asyncio
 import platform
+import configparser
 # import required module
 from cryptography.fernet import Fernet
 from filesplit.split import Split
 
 #D:\Code\p.txt
+def borrar(path):
+    files = os.listdir(path)
+    for f in files:
+        if platform.system()=="Windows":
+            f_path=path+"\\"+f
+        if platform.system()=="Linux":
+            f_path=path+"/"+f
+        os.remove(f_path)
+    os.rmdir(path)
+
 def crear():
     path = os.getcwd()
     if platform.system()=="Windows":
         crear_path=path+"\dividir"
     if platform.system()=="Linux":
         crear_path=path+"/dividir"
+    if os.path.exists(crear_path):
+        borrar(crear_path)
     #crear_path=path+"/dividir" linux
     try:
         os.mkdir(crear_path)

@@ -2,6 +2,7 @@
 from filesplit.merge import Merge
 import os
 import platform
+import configparser
 
 def mg_main():
     '''

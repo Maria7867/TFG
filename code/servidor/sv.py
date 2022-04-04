@@ -3,6 +3,7 @@ import socket
 import sys
 import os
 import asyncio
+import configparser
 
 from filesplit.split import Split
 #D:\Code\p.txt

@@ -22,6 +22,15 @@ from filesplit.split import Split
 # If modifying these scopes, delete the file token.json.
 #SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 SCOPES = ['https://www.googleapis.com/auth/drive']
+def borrar(path):
+    files = os.listdir(path)
+    for f in files:
+        if platform.system()=="Windows":
+            f_path=path+"\\"+f
+        if platform.system()=="Linux":
+            f_path=path+"/"+f
+        os.remove(f_path)
+    os.rmdir(path)
 
 def crear():
     path = os.getcwd()
@@ -29,6 +38,8 @@ def crear():
         crear_path=path+"\dividir"
     if platform.system()=="Linux":
         crear_path=path+"/dividir"
+    if os.path.exists(crear_path):
+        borrar(crear_path)
     try:
         os.mkdir(crear_path)
     except OSError:
