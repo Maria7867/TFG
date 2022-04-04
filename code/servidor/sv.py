@@ -65,15 +65,19 @@ def recv_bytes(connection, size, format):
 def sv_main():
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    print("IP: ")
-    IP=input()
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    host = config['SERVER']['HOST']
+    port = int(config['SERVER']['PORT'])
+    '''
+    print("Host: ")
+    host=input()
 
     print("Port: ")
     port=int(input())
-
+    '''
     # Bind the socket to the port
-    server_address = (IP, port) #localhost, 10000
+    server_address = (host, port) #localhost, 10000
 
     size = 1024
     format = "utf-8"
