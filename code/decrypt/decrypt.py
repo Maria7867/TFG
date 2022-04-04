@@ -19,11 +19,16 @@ def decrypt(filename, key_path):
     print("encrypted", file)
 
 def dcy_main():
-
+    '''
     print("key path: ")
     path=input() #D:\Code\decrypt\filekey.key
     print("path of the file you want to decrypt: ")
     filename=input() #D:\Code\decrypt\filekey.key
+    '''
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path = config['DECRYPT']['KEY_PATH']
+    filename = config['DECRYPT']['FILE_PATH']
     decrypt(filename,path)
 
 #if __name__ == '__main__':
