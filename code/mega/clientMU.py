@@ -45,12 +45,27 @@ async def dividir_enviar(file_path, m):
         await asyncio.sleep(1)
 
 def zip_file(file_path):
+    '''
     print("zip name: ")
     zip_name = input()
+    '''
+    zip_name = config['MEGA']['ZIP_NAME']
     zip_name = zip_name + '.zip'
     myzip=ZipFile(zip_name, 'w')
-    myzip.write(file_path) #no se si os.path.basename funciona para windows
+    if os.path.isdir(file_path): #path it's a directory
+        files = os.listdir(file_path)
+        for f in files:
+            if platform.system()=="Windows":
+                dir=file_path+"\\"+f
+            if platform.system()=="Linux":
+                dir=file_path+"/"+f
+            myzip.write(dir)
+
+    else:  #path it's a normal file
+        myzip.write(file_path) #no se si os.path.basename funciona para windows
+
     myzip.close()
+
     return zip_name
 
 
@@ -110,23 +125,38 @@ def cifrar (file_path, public_key):
 
 def mu_main():
     mega = Mega()
+    '''
     print("user: ")
     user = input()
     print("password: ")
     password = input()
+    '''
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    user = config['MEGA']['USER']
+    password = config['MEGA']['PASSWORD']
+    level = config['MEGA']['LEVEL']
+    file_path = config['MEGA']['PATH_FROM']
+    limit = int(config['MEGA']['LIMIT'])
+    public_key = config['MEGA']['PUBLIC_KEY']
 
     m = mega.login(user, password)
     #m = mega.login('tfgdataleak@gmail.com', 'tfg_data1')
     # login using a temporary anonymous account m = mega.login()
-
+    '''
     print("choose level: ")
     level = input()
 
-    print("level:", level)
     print("file path: ")
     file_path = input()
+    '''
     file_size = os.path.getsize(file_path)
-    if file_size>200:
+    print("FILE SIZE", file_size)
+    '''
+    print("size limit in bytes: ")
+    limit = int(input())
+    '''
+    if file_size>limit:
         if level=='0':
             asyncio.run(dividir_enviar(file_path, m))
         if level=='1':
@@ -135,9 +165,10 @@ def mu_main():
         #m.get_upload_link(file)
         # see mega.py for destination and filename options
         if level=='2':
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             zip_name=cifrar(file_path, public_key)
             asyncio.run(dividir_enviar(zip_name, m))
 
@@ -155,9 +186,10 @@ def mu_main():
         #m.get_upload_link(file)
         # see mega.py for destination and filename options
         if level=='2':
+            '''
             print ("public key path: ")
             public_key = input () #D:\Code\llave_publica\filekey.key
-
+            '''
             zip_name=cifrar(file_path, public_key)
             file = m.upload(zip_name)
 
